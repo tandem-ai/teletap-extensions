@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # build.sh <extension> — builds providers/<extension> (or extensions/<extension>)
 # to WASM and packs it into dist/<name>-<version>.teletapext with `teletap ext pack`.
-# TELETAP_SIGN_KEY=<key file> signs it (mesh/ extensions load only signed by teletap).
-# TELETAP=<path> picks the mesh binary (default: teletap on PATH).
+# TELETAP_SIGN_KEY=<key file> signs it (teletap/ extensions load only signed by teletap).
+# TELETAP=<path> picks the teletap binary (default: teletap on PATH).
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 name=${1:?usage: build.sh <extension>}
@@ -18,4 +18,4 @@ cp "$root/target/wasm32-unknown-unknown/release/${crate//-/_}.wasm" "$stage/exte
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$src/manifest.toml" | head -1)
 sign=()
 [ -n "${TELETAP_SIGN_KEY:-}" ] && sign=(--sign-key "$TELETAP_SIGN_KEY")
-"${TELETAP:-mesh}" ext pack "$stage" -o "$root/dist/$name-$version.teletapext" ${sign[@]+"${sign[@]}"}
+"${TELETAP:-teletap}" ext pack "$stage" -o "$root/dist/$name-$version.teletapext" ${sign[@]+"${sign[@]}"}

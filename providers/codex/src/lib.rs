@@ -248,17 +248,17 @@ fn install_doc(doc: &mut DocumentMut, req: &InstallRequest, path: &str, src: &st
     {
         let servers = table_at(root, "mcp_servers")?;
         for (name, args, trusted) in config::MCP_SERVERS {
-            let mut mesh = Table::new();
-            mesh.insert("command", value(req.teletap_bin.clone()));
+            let mut server = Table::new();
+            server.insert("command", value(req.teletap_bin.clone()));
             let args: toml_edit::Array = args.iter().copied().collect();
-            mesh.insert("args", value(args));
+            server.insert("args", value(args));
             if let Some(home) = &req.teletap_home {
                 let mut env = InlineTable::new();
                 env.insert("TELETAP_HOME", home.clone().into());
-                mesh.insert("env", value(env));
+                server.insert("env", value(env));
             }
             if *trusted {
-                mesh.insert("default_tools_approval_mode", value("approve"));
+                server.insert("default_tools_approval_mode", value("approve"));
             }
             match servers.get_mut(name).and_then(Item::as_table_mut) {
                 // Keep the table where it is (and any keys the user added).
@@ -266,12 +266,12 @@ fn install_doc(doc: &mut DocumentMut, req: &InstallRequest, path: &str, src: &st
                     if req.teletap_home.is_none() {
                         existing.remove("env");
                     }
-                    for (k, v) in mesh.iter() {
+                    for (k, v) in server.iter() {
                         existing.insert(k, v.clone());
                     }
                 }
                 None => {
-                    servers.insert(name, Item::Table(mesh));
+                    servers.insert(name, Item::Table(server));
                 }
             }
         }
@@ -716,8 +716,8 @@ mod tests {
         assert_eq!(uninstalled(&with_ours), user);
         assert_eq!(uninstalled(&installed("", &req(None))), "");
         // Someone else's `teletap` server stays.
-        let theirs = "[mcp_servers.teletap]\ncommand = \"/bin/meshy\"\n\n\
-            [mcp_servers.teletap-ext]\ncommand = \"/bin/meshy\"\n";
+        let theirs = "[mcp_servers.teletap]\ncommand = \"/bin/not-teletap\"\n\n\
+            [mcp_servers.teletap-ext]\ncommand = \"/bin/not-teletap\"\n";
         assert_eq!(uninstalled(theirs), theirs);
         let installed = installed(theirs, &req(None));
         assert!(installed.contains("args = [\"mcp\", \"--ext\"]"));
@@ -767,7 +767,7 @@ mod tests {
     }
 
     #[test]
-    fn renders_like_mesh_did() {
+    fn renders_what_the_hook_prints() {
         for kind in ["stop", "idle", "blocked", "end"] {
             assert_eq!(render(kind, Some("m".into()), Some("hi".into())), "");
         }

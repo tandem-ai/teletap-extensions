@@ -434,7 +434,7 @@ mod tests {
     }
 
     #[test]
-    fn renders_like_mesh_did() {
+    fn renders_what_the_hook_prints() {
         assert_eq!(render("stop", Some("m".into()), None), "");
         assert_eq!(render("prompt", None, None), "");
         assert_eq!(

@@ -16,4 +16,4 @@ for n in "${names[@]}"; do
   version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$src/manifest.toml" | head -1)
   packages+=("$root/dist/$n-$version.teletapext")
 done
-"${TELETAP:-mesh}" ext publish "${packages[@]}" --into "${REGISTRY:-$root/dist/registry}"
+"${TELETAP:-teletap}" ext publish "${packages[@]}" --into "${REGISTRY:-$root/dist/registry}"

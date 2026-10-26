@@ -2,7 +2,7 @@
 
 Extensions for [teletap](https://usetandem.com): what the community and the teletap team
 build on top of it, through the host API only. The design is `docs/extensions.md` in
-the mesh repo (decisions E1–E27).
+the teletap repo (decisions E1–E27).
 
 | Path | What |
 |---|---|
@@ -39,8 +39,8 @@ teletap install                                  #   every agent found, provider
 `teletap/` extensions only load signed by teletap (`scripts/build.sh` signs with
 `TELETAP_SIGN_KEY`; debug builds of teletap also trust `TELETAP_EXT_DEV_KEY`).
 
-Getting an extension on teletap's official list: open a PR here. The mesh team reviews it by
-hand; once it is on `main`, the teletap team runs teletap's Extensions workflow, which builds
+Getting an extension on teletap's official list: open a PR here. The teletap team reviews it by
+hand; once it is on `main`, it runs teletap's Extensions workflow, which builds
 what the registry doesn't have yet (an id at a new version), signs it and publishes it. A
 published version never changes: bump `version` in `manifest.toml` and `Cargo.toml`.
 

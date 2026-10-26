@@ -258,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn mesh_ext_follows_the_mesh_binary() {
+    fn teletap_ext_follows_the_teletap_binary() {
         let mut r = opts();
         r.teletap_home = Some("/tmp/h".into());
         let mut s = json!({"mcpServers": {
@@ -273,7 +273,7 @@ mod tests {
         remove(&mut s);
         assert_eq!(s["mcpServers"], json!({"ext": {"command": "/bin/other"}}));
         // Someone else's `teletap-ext` server stays.
-        let mut theirs = json!({"mcpServers": {"teletap-ext": {"command": "/bin/meshy"}}});
+        let mut theirs = json!({"mcpServers": {"teletap-ext": {"command": "/bin/not-teletap"}}});
         let before = theirs.clone();
         remove(&mut theirs);
         assert_eq!(theirs, before);
@@ -328,7 +328,7 @@ mod tests {
     }
 
     #[test]
-    fn renders_like_mesh_did() {
+    fn renders_what_the_hook_prints() {
         for kind in ["stop", "prompt", "end", "start", "step"] {
             assert_eq!(render(kind, None, None), "", "{kind}");
         }

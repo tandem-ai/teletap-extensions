@@ -243,13 +243,13 @@ mod tests {
     #[test]
     fn plugin_fills_the_placeholders() {
         let mut r = req(None, None);
-        r.teletap_home = Some("/tmp/my mesh".into());
+        r.teletap_home = Some("/tmp/my teletap".into());
         let code = plugin(&r);
         assert!(!code.contains("__TELETAP_"), "placeholders filled");
         assert!(!code.contains("pre_tool_call"), "no pre-tool hook");
         assert!(code.contains(MARK));
         assert!(code.contains(r#"TELETAP = "/Users/p/.local/bin/teletap""#));
-        assert!(code.contains(r#"TELETAP_HOME_PIN = "/tmp/my mesh""#));
+        assert!(code.contains(r#"TELETAP_HOME_PIN = "/tmp/my teletap""#));
         assert!(plugin(&req(None, None)).contains(r#"TELETAP_HOME_PIN = """#));
         assert!(MANIFEST.contains("name: teletap"));
     }
@@ -288,7 +288,7 @@ mod tests {
     }
 
     #[test]
-    fn renders_like_mesh_did() {
+    fn renders_what_the_hook_prints() {
         for kind in ["stop", "step", "idle", "blocked", "end"] {
             assert_eq!(
                 render(kind, Some("m".into()), Some("hi".into())),

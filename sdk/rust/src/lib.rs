@@ -1,6 +1,6 @@
 //! The Rust SDK for teletap extensions: the events an extension's `handle`
 //! export gets, and the host API calls it makes through `teletap_call`
-//! (host API 1.3, `docs/extensions.md` in the mesh repo).
+//! (host API 1.3, `docs/extensions.md` in the teletap repo).
 //!
 //! ```ignore
 //! use extism_pdk::*;
