@@ -1,0 +1,79 @@
+Cargo.lock
+  s_f5469caeba39e5::t_574cfc869b3e1f 57,68,98,202,228,307,368,483-492
+Cargo.toml
+  s_f5469caeba39e5::t_190ca9b3da347a 20
+README.md
+  s_f5469caeba39e5::t_3e262cfb300791 1,3,9-17,21-22,25,29-31,34-36,39-40,42-43
+extensions/pulse/Cargo.toml
+  s_f5469caeba39e5::t_f89ffe4711cc80 3,13
+extensions/pulse/manifest.toml
+  s_f5469caeba39e5::t_08ddc7d2970e6b 1
+extensions/pulse/src/lib.rs
+  s_f5469caeba39e5::t_9e2a40acf8d1cc 1,3,6-7,14,27,36,53,66
+providers/claude-code/Cargo.toml
+  s_f5469caeba39e5::t_7a7380d5cde759 3,13
+providers/claude-code/manifest.toml
+  s_f5469caeba39e5::t_85be42a088da90 1,6,24-27
+providers/claude-code/src/lib.rs
+  s_f5469caeba39e5::t_a2f0ce2265fd70 1-3,6,9,12,27,29-30,38,44,50,52-58,206,225,246,293,309,370,452,461-463,466,468,472-473,480-481,484-487,496-497,500-501,519-521,528-531,536-537,540-543,549-550
+providers/codex/Cargo.toml
+  s_f5469caeba39e5::t_5d9a3ba853b911 3,13
+providers/codex/manifest.toml
+  s_f5469caeba39e5::t_a80de298039ef8 1,6
+providers/codex/src/lib.rs
+  s_f5469caeba39e5::t_45b9f07fe9e4f6 1-3,5,14-15,19-20,26,37,47-48,50-51,67,144,207,224,226,252,255,257,266,378,483,521-522,568,570-571,592-594,602-608,622-627,648,650-653,657,660,665,680-682,684,694,696,698,718-720
+providers/cursor/Cargo.toml
+  s_f5469caeba39e5::t_a183b37f28ccf6 3,13
+providers/cursor/manifest.toml
+  s_f5469caeba39e5::t_68f99b01b8d0e7 1,6
+providers/cursor/src/lib.rs
+  s_f5469caeba39e5::t_0a8a79e699e17b 1-3,5-6,8-9,26-28,30-31,113-114,196,283,288,321-322,334-336
+providers/gemini/Cargo.toml
+  s_f5469caeba39e5::t_c8c7ffa4dae091 3,13
+providers/gemini/manifest.toml
+  s_f5469caeba39e5::t_a821cdb37d973c 1,6
+providers/gemini/src/lib.rs
+  s_f5469caeba39e5::t_3392226b954e1d 1-3,5,13,23-25,93,119,219,223,237,242-243,247-248,250,263,265,270-271,275-276
+providers/hermes/Cargo.toml
+  s_f5469caeba39e5::t_9e444a14e68b20 3,13
+providers/hermes/manifest.toml
+  s_f5469caeba39e5::t_5730219b8c9a2a 1,6,23-25,29-37
+providers/hermes/src/hermes-plugin.py
+  s_f5469caeba39e5::t_579d9296d19bd6 1,3-4,6-7,21-22,26,29-36,43-44,48
+providers/hermes/src/lib.rs
+  s_f5469caeba39e5::t_17c901c67b66a1 1-3,6,8,10,23-25,28,30,76,79,83,85-86,111,117,123,131,144,151-152,172,217,230,232,235,239,246,248,251-254
+providers/pi/Cargo.toml
+  s_f5469caeba39e5::t_e1c7ab5a746f14 3,13
+providers/pi/manifest.toml
+  s_f5469caeba39e5::t_993a1a30f6456a 1,6,21-23,25
+providers/pi/src/lib.rs
+  s_f5469caeba39e5::t_29c07d65ce6efa 1-3,6,10,24,26-27,33,85,88,92,94-95,139-140,160,205,218,222,226,230,237-239,243,246,249-250,256,258,261-263
+providers/pi/src/pi-extension.ts
+  s_f5469caeba39e5::t_6eaaeb58ebcbce 1-3,6-7,17-18,21,23-29,38,41,53,86,90,94
+scripts/build.sh
+  s_f5469caeba39e5::t_cb4a60f6acfcce 3-5,20-21
+scripts/registry.sh
+  s_f5469caeba39e5::t_527fee29432f68 4,17,19
+sdk/rust/Cargo.toml
+  s_f5469caeba39e5::t_4fbd086065edc9 2-3
+sdk/rust/src/config.rs
+  s_f5469caeba39e5::t_5136d77413cfbc 2,22,25-26,30,35,43,48,51-52,62,65,71,76,78
+sdk/rust/src/lib.rs
+  s_f5469caeba39e5::t_9b87fcaa293597 1-2,10-11,28,48-49,71,131-132,143-145,153-154,165,181,200,222,234,294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88292320f3374b4bcc830d1c955a46f40f0b1633",
+  "prompts": {},
+  "sessions": {
+    "s_f5469caeba39e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71b7d72e-deaa-452b-8939-dcf305e1d36c",
+        "model": "unknown"
+      },
+      "human_author": "Gabriel <gabriel@usetandem.ai>"
+    }
+  }
+}

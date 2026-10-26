@@ -1,0 +1,33 @@
+Cargo.lock
+  s_f5469caeba39e5::t_7692fd0b443a81 223,302
+providers/claude-code/src/lib.rs
+  s_f5469caeba39e5::t_68a81a64d05291 50
+providers/hermes/Cargo.toml
+  s_f5469caeba39e5::t_dbafc1e1e2ca43 4
+providers/hermes/manifest.toml
+  s_f5469caeba39e5::t_cc923686e29a78 2
+providers/hermes/src/lib.rs
+  s_f5469caeba39e5::t_ee7037dcf9e2b1 28,128,130,172
+providers/pi/Cargo.toml
+  s_f5469caeba39e5::t_d905132c7c275c 4
+providers/pi/manifest.toml
+  s_f5469caeba39e5::t_bfb6fb12350868 2
+providers/pi/src/lib.rs
+  s_f5469caeba39e5::t_6a075321e70b7b 107,160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b1f370296f2950221419e93264a751803198cf6",
+  "prompts": {},
+  "sessions": {
+    "s_f5469caeba39e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71b7d72e-deaa-452b-8939-dcf305e1d36c",
+        "model": "unknown"
+      },
+      "human_author": "Gabriel <gabriel@usetandem.ai>"
+    }
+  }
+}
