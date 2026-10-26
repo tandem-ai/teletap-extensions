@@ -1,0 +1,39 @@
+README.md
+  s_90f9d6de9d2292::t_62483989e6b18b 5,42-43
+providers/claude-code/src/lib.rs
+  s_90f9d6de9d2292::t_dacd4554b6b2f3 437
+providers/codex/src/lib.rs
+  s_90f9d6de9d2292::t_e9fbac33c4b37a 251-252,254,258,261,269,274,719-720,770
+providers/cursor/src/lib.rs
+  s_90f9d6de9d2292::t_1302141db3cdd7 396
+providers/gemini/src/lib.rs
+  s_90f9d6de9d2292::t_41622cd6745fad 261,276,331
+providers/hermes/src/lib.rs
+  s_90f9d6de9d2292::t_85adaeffb53ce6 246,252,291
+providers/pi/src/lib.rs
+  s_90f9d6de9d2292::t_6c05626c49100a 256,262,308
+scripts/build.sh
+  s_90f9d6de9d2292::t_138dcfb066c5a1 4-5,21
+scripts/registry.sh
+  s_90f9d6de9d2292::t_bfbb6ae8214e0d 19
+sdk/rust/src/config.rs
+  s_90f9d6de9d2292::t_c232f8a41be137 22,35,47,55
+sdk/rust/src/lib.rs
+  s_90f9d6de9d2292::t_f8d0da090ce80d 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dfebb33aae67ff7e36a634afebeae40a9fe76da5",
+  "prompts": {},
+  "sessions": {
+    "s_90f9d6de9d2292": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e847d38d-7405-4bdc-b896-0881070efb75",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Paul FOURNET <paul.pfournet@gmail.com>"
+    }
+  }
+}
