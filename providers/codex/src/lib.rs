@@ -68,10 +68,6 @@ const EVENTS: &[(&str, &str, &str, u64)] = &[
     ("PermissionRequest", "permission_request", "blocked", 5),
 ];
 
-/// Events older versions hooked: install drops our handler there (uninstall
-/// drops ours everywhere). `PreToolUse` ran the team-rule check.
-const OLD_EVENTS: &[&str] = &["PreToolUse"];
-
 fn label_for(event: &str) -> Option<&'static str> {
     Some(match event {
         "PreToolUse" => "pre_tool_use",
@@ -279,7 +275,6 @@ fn install_doc(doc: &mut DocumentMut, req: &InstallRequest, path: &str, src: &st
 
     // Hooks, and their trust.
     let hooks = table_at(root, "hooks")?;
-    remove_our_hooks(hooks, src, Some(OLD_EVENTS));
     let mut trust: Vec<(String, String)> = vec![];
     for (event, label, ours, timeout) in EVENTS {
         let command = config::hook_command(req, "codex", ours);
@@ -386,23 +381,22 @@ fn uninstall_doc(doc: &mut DocumentMut, src: &str) {
     }
 
     if let Some(hooks) = root.get_mut("hooks").and_then(Item::as_table_mut) {
-        remove_our_hooks(hooks, src, None);
+        remove_our_hooks(hooks, src);
         if hooks.is_empty() {
             root.remove("hooks");
         }
     }
 }
 
-/// Removes our handlers from `only` those events (every event when `None`),
-/// drops emptied groups and events, and fixes the trust keys so the user's
-/// other hooks stay trusted.
-fn remove_our_hooks(hooks: &mut Table, src: &str, only: Option<&[&str]>) {
+/// Removes our handlers from every event, drops emptied groups and events,
+/// and fixes the trust keys so the user's other hooks stay trusted.
+fn remove_our_hooks(hooks: &mut Table, src: &str) {
     // (label, removed group indices) per event, to fix trust keys.
     let mut removed: Vec<(&'static str, Vec<usize>)> = vec![];
     let events: Vec<String> = hooks
         .iter()
         .map(|(k, _)| k.to_string())
-        .filter(|k| k != "state" && only.is_none_or(|o| o.contains(&k.as_str())))
+        .filter(|k| k != "state")
         .collect();
     for event in events {
         let Some(groups) = hooks.get_mut(&event).and_then(Item::as_array_of_tables_mut) else {
@@ -675,18 +669,15 @@ mod tests {
     }
 
     #[test]
-    fn install_keeps_the_users_config_and_drops_old_hooks() {
+    fn install_keeps_the_users_config() {
         let before = "# mine\nmodel = \"o3\"\n\n\
             [mcp_servers.teletap]\ncommand = \"/old/teletap\"\nargs = [\"mcp\"]\n\
             env = { TELETAP_HOME = \"/old\" }\nstartup_timeout_sec = 20\n\n\
             [mcp_servers.teletap-ext]\ncommand = \"/old/teletap\"\nargs = [\"mcp\", \"--ext\"]\n\n\
             [[hooks.PreToolUse]]\n[[hooks.PreToolUse.hooks]]\ntype = \"command\"\n\
-            command = \"teletap hook codex tool\"\n\n\
-            [[hooks.PreToolUse]]\n[[hooks.PreToolUse.hooks]]\ntype = \"command\"\n\
             command = \"lint\"\n\n\
             [[hooks.Stop]]\n[[hooks.Stop.hooks]]\ntype = \"command\"\ncommand = \"notify\"\n\n\
-            [hooks.state.\"/real/.codex/config.toml:pre_tool_use:0:0\"]\ntrusted_hash = \"a\"\n\n\
-            [hooks.state.\"/real/.codex/config.toml:pre_tool_use:1:0\"]\ntrusted_hash = \"b\"\n";
+            [hooks.state.\"/real/.codex/config.toml:pre_tool_use:0:0\"]\ntrusted_hash = \"b\"\n";
         let out = installed(before, &req(None));
         assert!(out.starts_with("# mine\nmodel = \"o3\"\n"));
         // Our table stays where it was, with the user's key; no env without a home.
@@ -696,14 +687,28 @@ mod tests {
              [mcp_servers.teletap-ext]\ncommand = \"/a b/teletap\"\nargs = [\"mcp\", \"--ext\"]\n\n"
         ));
         assert!(!out.contains("/old/teletap"));
-        assert!(!out.contains("hook codex tool"));
+        // The user's PreToolUse hook and its trust stay.
         assert!(out.contains("command = \"lint\""));
-        // The user's PreToolUse group moved to 0, and keeps its trust.
-        assert!(!out.contains("pre_tool_use:1:0"));
         assert!(out.contains("pre_tool_use:0:0\"]\ntrusted_hash = \"b\""));
         // Our Stop handler is a second group, after the user's.
         assert!(out.contains("command = \"notify\""));
         assert!(out.contains(&format!("{SRC}:stop:1:0")));
+    }
+
+    #[test]
+    fn uninstall_moves_the_users_trust_down() {
+        // The user's Stop group came after ours: it moves to 0, trusted.
+        let ours = installed("", &req(None));
+        let with_theirs = format!(
+            "{ours}\n[[hooks.Stop]]\n[[hooks.Stop.hooks]]\ntype = \"command\"\ncommand = \"notify\"\n"
+        );
+        let mut doc = parse_doc(&with_theirs, "c.toml").unwrap();
+        doc["hooks"]["state"][&format!("{SRC}:stop:1:0")]["trusted_hash"] = value("u");
+        let out = uninstalled(&doc.to_string());
+        assert!(!out.contains("hook codex"), "{out}");
+        assert!(out.contains("command = \"notify\""));
+        assert!(!out.contains("stop:1:0"));
+        assert!(out.contains(&format!("{SRC}:stop:0:0\"]\ntrusted_hash = \"u\"")), "{out}");
     }
 
     #[test]
