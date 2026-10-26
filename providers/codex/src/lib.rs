@@ -707,8 +707,18 @@ mod tests {
         let out = uninstalled(&doc.to_string());
         assert!(!out.contains("hook codex"), "{out}");
         assert!(out.contains("command = \"notify\""));
-        assert!(!out.contains("stop:1:0"));
-        assert!(out.contains(&format!("{SRC}:stop:0:0\"]\ntrusted_hash = \"u\"")), "{out}");
+        let state = &parse_doc(&out, "c.toml").unwrap()["hooks"]["state"];
+        let keys: Vec<&str> = state
+            .as_table_like()
+            .unwrap()
+            .iter()
+            .map(|(k, _)| k)
+            .collect();
+        assert_eq!(keys, [format!("{SRC}:stop:0:0")], "{out}");
+        assert_eq!(
+            state[&format!("{SRC}:stop:0:0")]["trusted_hash"].as_str(),
+            Some("u")
+        );
     }
 
     #[test]
