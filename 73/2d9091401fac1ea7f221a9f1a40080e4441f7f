@@ -1,0 +1,25 @@
+Cargo.lock
+  s_90f9d6de9d2292::t_523042ba9aa3c4 62
+providers/codex/Cargo.toml
+  s_90f9d6de9d2292::t_c2ba1867785943 4
+providers/codex/manifest.toml
+  s_90f9d6de9d2292::t_9643d95d3956ea 2-3
+providers/codex/src/lib.rs
+  s_90f9d6de9d2292::t_de744b2aa573f8 384,391-393,399,672,680,690,698-713
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "732d9091401fac1ea7f221a9f1a40080e4441f7f",
+  "prompts": {},
+  "sessions": {
+    "s_90f9d6de9d2292": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e847d38d-7405-4bdc-b896-0881070efb75",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Paul FOURNET <paul.pfournet@gmail.com>"
+    }
+  }
+}
