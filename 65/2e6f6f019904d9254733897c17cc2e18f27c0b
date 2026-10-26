@@ -1,0 +1,19 @@
+providers/codex/src/lib.rs
+  s_90f9d6de9d2292::t_f52b61555430d1 710-721
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "652e6f6f019904d9254733897c17cc2e18f27c0b",
+  "prompts": {},
+  "sessions": {
+    "s_90f9d6de9d2292": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e847d38d-7405-4bdc-b896-0881070efb75",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Paul FOURNET <paul.pfournet@gmail.com>"
+    }
+  }
+}
