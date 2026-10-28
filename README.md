@@ -2,7 +2,7 @@
 
 Extensions for [teletap](https://usetandem.com). An extension is a provider: the adapter
 that connects one agent to teletap, through the host API only. The design is
-`docs/extensions.md` in the mesh repo (decisions E1–E27).
+`docs/extensions.md` in the teletap repo (decisions E1–E27).
 
 | Path | What |
 |---|---|

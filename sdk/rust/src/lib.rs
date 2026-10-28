@@ -1,7 +1,7 @@
 //! The Rust SDK for teletap providers, the extensions that connect one agent
 //! to teletap: the events a provider's `handle` export gets, and the host API
 //! calls it makes through `teletap_call` (host API 1.3, `docs/extensions.md`
-//! in the mesh repo). `providers/*` are the examples.
+//! in the teletap repo). `providers/*` are the examples.
 //!
 //! ```ignore
 //! use extism_pdk::*;

@@ -19,7 +19,7 @@ pub fn shell_quote(s: &str) -> String {
     }
 }
 
-/// `[TELETAP_HOME=… ]<mesh> hook <agent> <event>`, run by the agent's shell.
+/// `[TELETAP_HOME=… ]<teletap> hook <agent> <event>`, run by the agent's shell.
 pub fn hook_command(req: &InstallRequest, agent: &str, event: &str) -> String {
     let mut cmd = String::new();
     if let Some(home) = &req.teletap_home {
@@ -32,7 +32,7 @@ pub fn hook_command(req: &InstallRequest, agent: &str, event: &str) -> String {
     cmd
 }
 
-/// True for a hook command teletap wrote (any mesh path or home).
+/// True for a hook command teletap wrote (any teletap path or home).
 pub fn is_our_hook(command: &str, agent: &str) -> bool {
     let words: Vec<String> = command
         .split_whitespace()
@@ -52,7 +52,7 @@ pub const MCP_SERVERS: &[(&str, &[&str])] = &[("teletap", &["mcp"])];
 /// install and uninstall remove them.
 pub const OLD_MCP_SERVERS: &[&str] = &["teletap-ext"];
 
-/// True when an MCP server entry runs the mesh binary.
+/// True when an MCP server entry runs the teletap binary.
 pub fn is_our_mcp(entry: &Value) -> bool {
     let bin = entry
         .get("command")

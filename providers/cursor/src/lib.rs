@@ -395,7 +395,7 @@ mod tests {
     }
 
     #[test]
-    fn renders_like_mesh_did() {
+    fn renders_what_the_hook_prints() {
         for kind in ["stop", "step", "start", "end", "prompt"] {
             assert_eq!(render(kind, None, None), "", "{kind}");
         }
