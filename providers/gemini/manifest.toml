@@ -1,14 +1,19 @@
 id = "teletap/gemini"
-version = "0.2.0"
+version = "0.3.0"
 api = "1.1"
 kind = "provider"
 scope = "personal"
-description = "Connects Gemini CLI to teletap: hooks and the teletap and teletap-ext MCP servers."
+description = "Connects Gemini CLI to teletap: hooks and the teletap MCP server."
 
 [provider]
 agent = "gemini"
 name = "Gemini CLI"
 install_env = ["GEMINI_CLI_HOME"]
+skill = [
+  "{config_dir}/skills/teletap/SKILL.md",
+  "${GEMINI_CLI_HOME}/.gemini/skills/teletap/SKILL.md",
+  "~/.gemini/skills/teletap/SKILL.md",
+]
 
 [provider.session]
 processes = ["gemini"]

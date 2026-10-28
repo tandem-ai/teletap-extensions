@@ -3,12 +3,12 @@
 //! `hooks.rs` in teletap itself; it writes the same files, byte for byte.
 //!
 //! - install: hooks and permissions in `<config dir>/settings.json`, the MCP
-//!   servers `teletap` and `teletap-ext` (extension tools) in the user-scope
-//!   `mcpServers` of `.claude.json` (through `claude mcp …` when no config
-//!   dir is given and `claude` is on PATH: a running Claude rewrites that
-//!   file all the time). Only `teletap`'s tools are allowed without asking;
-//!   extension tools are asked about on first use;
-//! - launch (a cloud agent's run): the same servers in the run's
+//!   server `teletap` in the user-scope `mcpServers` of `.claude.json`
+//!   (through `claude mcp …` when no config dir is given and `claude` is on
+//!   PATH: a running Claude rewrites that file all the time), its tools
+//!   allowed. The `teletap-ext` server older versions set goes, on install
+//!   and uninstall;
+//! - launch (a cloud agent's run): the same server in the run's
 //!   `mcp.json`, given with `--mcp-config`, and `teletap`'s tools allowed with
 //!   `--allowedTools`; nothing in `~/.claude`. Both flags take several
 //!   values, so each is passed as `--flag=value`: the person's prompt that
@@ -47,7 +47,7 @@ const EVENTS: &[(&str, &str, u64, Option<&str>)] = &[
 ];
 
 /// What a session may run without asking: the agent-facing commands only and
-/// teletap's MCP tools (not `mcp__teletap-ext__*`: extension tools are asked about).
+/// teletap's MCP tools.
 const PERMISSIONS: &[&str] = &[
     "Bash(teletap send:*)",
     "Bash(teletap inbox:*)",
@@ -203,8 +203,7 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
     report.notes.push(
         "Claude Code: hooks (SessionStart, UserPromptSubmit, Stop, Notification, \
          PermissionRequest, SessionEnd), \
-         permissions and the `teletap` and `teletap-ext` MCP servers are set; new sessions \
-         pick them up."
+         permissions and the `teletap` MCP server are set; new sessions pick them up."
             .into(),
     );
     Ok(report)
@@ -214,7 +213,7 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
 fn mcp_entries(req: &InstallRequest) -> Vec<(&'static str, Value)> {
     json::MCP_SERVERS
         .iter()
-        .map(|(name, args, _)| {
+        .map(|(name, args)| {
             let extra = [("type", Value::String("stdio".into()))];
             (*name, json::mcp_entry(req, args, &extra))
         })
@@ -247,19 +246,33 @@ fn launch_args(path: &str) -> Vec<String> {
     ]
 }
 
-/// Our MCP servers in `.claude.json` itself.
+/// Our MCP servers in `.claude.json` itself, old ones gone.
 fn add_mcp(cj: &mut Value, req: &InstallRequest) -> Result<()> {
     let servers = json::object_at(cj, "mcpServers")?;
     for (name, entry) in mcp_entries(req) {
         servers.insert(name.into(), entry);
     }
+    json::remove_old_mcp(cj);
     Ok(())
 }
 
+/// Our old servers in `.claude.json` (as read).
+fn old_servers(cj: Option<&Value>) -> Vec<&'static str> {
+    let mut cj = cj.cloned().unwrap_or_default();
+    json::OLD_MCP_SERVERS
+        .iter()
+        .copied()
+        .filter(|name| json::remove_mcp_server(&mut cj, name))
+        .collect()
+}
+
 /// The `claude mcp …` calls that put our servers in `.claude.json` (as
-/// read): none for a server already in place.
+/// read) and take old ones out: none for a server already in place.
 fn cli_installs(cj: Option<&Value>, req: &InstallRequest) -> Vec<Vec<String>> {
-    let mut calls = vec![];
+    let mut calls: Vec<_> = old_servers(cj)
+        .into_iter()
+        .map(|name| argv(&["mcp", "remove", "--scope", "user", name]))
+        .collect();
     for (name, entry) in mcp_entries(req) {
         let current = cj.and_then(|cj| cj.get("mcpServers")?.get(name));
         if current == Some(&entry) {
@@ -308,7 +321,8 @@ fn uninstall(req: &InstallRequest) -> Result<InstallResult> {
         if via_cli(req)? {
             // Our entries only: a user's own `teletap` server stays.
             let mut removed = false;
-            for (name, ..) in json::MCP_SERVERS {
+            let names = json::MCP_SERVERS.iter().map(|(name, _)| *name);
+            for name in names.chain(json::OLD_MCP_SERVERS.iter().copied()) {
                 if json::remove_mcp_server(&mut cj, name) {
                     run_claude(&["mcp", "remove", "--scope", "user", name])?;
                     removed = true;
@@ -470,7 +484,6 @@ mod tests {
             cfg,
             json!({"mcpServers": {
                 "teletap": {"type": "stdio", "command": "/usr/local/bin/teletap", "args": ["mcp"], "env": env},
-                "teletap-ext": {"type": "stdio", "command": "/usr/local/bin/teletap", "args": ["mcp", "--ext"], "env": env},
             }})
         );
         // One value each: a prompt after them isn't read as a config file.
@@ -496,15 +509,36 @@ mod tests {
             cj["mcpServers"]["teletap"],
             json!({"type": "stdio", "command": "/usr/local/bin/teletap", "args": ["mcp"]})
         );
-        assert_eq!(
-            cj["mcpServers"]["teletap-ext"],
-            json!({"type": "stdio", "command": "/usr/local/bin/teletap", "args": ["mcp", "--ext"]})
-        );
+        assert!(cj["mcpServers"].get("teletap-ext").is_none());
         let once = cj.clone();
         add_mcp(&mut cj, &opts()).unwrap();
         assert_eq!(cj, once, "idempotent");
         assert!(json::remove_mcp(&mut cj));
         assert_eq!(cj, original);
+    }
+
+    #[test]
+    fn the_old_teletap_ext_server_goes() {
+        let ext = json!({"type": "stdio", "command": "/old/teletap", "args": ["mcp", "--ext"]});
+        let mut cj = json!({"mcpServers": {"gh": {"command": "gh-mcp"}, "teletap-ext": ext}});
+        add_mcp(&mut cj, &opts()).unwrap();
+        assert!(cj["mcpServers"].get("teletap-ext").is_none(), "on install");
+        cj["mcpServers"]["teletap-ext"] = ext;
+        assert!(json::remove_mcp(&mut cj));
+        assert_eq!(
+            cj,
+            json!({"mcpServers": {"gh": {"command": "gh-mcp"}}}),
+            "on uninstall"
+        );
+        // Someone else's `teletap-ext` server stays.
+        let theirs = json!({"mcpServers": {"teletap-ext": {"command": "/bin/other"}}});
+        let mut cj = theirs.clone();
+        add_mcp(&mut cj, &opts()).unwrap();
+        assert_eq!(
+            cj["mcpServers"]["teletap-ext"],
+            theirs["mcpServers"]["teletap-ext"]
+        );
+        assert!(old_servers(Some(&theirs)).is_empty());
     }
 
     #[test]
@@ -523,31 +557,21 @@ mod tests {
         };
         let remove = |name: &str| argv(&["mcp", "remove", "--scope", "user", name]);
         let r = opts();
-        assert_eq!(
-            cli_installs(None, &r),
-            [
-                add("teletap", r#""mcp""#),
-                add("teletap-ext", r#""mcp","--ext""#)
-            ]
-        );
+        assert_eq!(cli_installs(None, &r), [add("teletap", r#""mcp""#)]);
         let mut cj = json!({});
         add_mcp(&mut cj, &r).unwrap();
         assert!(cli_installs(Some(&cj), &r).is_empty(), "idempotent");
         // An entry for an old teletap binary is replaced.
-        cj["mcpServers"]["teletap-ext"]["command"] = json!("/old/teletap");
+        cj["mcpServers"]["teletap"]["command"] = json!("/old/teletap");
         assert_eq!(
             cli_installs(Some(&cj), &r),
-            [
-                remove("teletap-ext"),
-                add("teletap-ext", r#""mcp","--ext""#)
-            ]
+            [remove("teletap"), add("teletap", r#""mcp""#)]
         );
-    }
-
-    #[test]
-    fn extension_tools_are_asked_about() {
-        assert!(PERMISSIONS.contains(&"mcp__teletap__*"));
-        assert!(!PERMISSIONS.iter().any(|p| p.contains("teletap-ext")));
+        // The old `teletap-ext` server goes.
+        add_mcp(&mut cj, &r).unwrap();
+        cj["mcpServers"]["teletap-ext"] =
+            json!({"command": "/old/teletap", "args": ["mcp", "--ext"]});
+        assert_eq!(cli_installs(Some(&cj), &r), [remove("teletap-ext")]);
     }
 
     #[test]

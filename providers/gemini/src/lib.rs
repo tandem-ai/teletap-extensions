@@ -2,15 +2,14 @@
 //! `teletap-agents/src/install/gemini.rs` and the Gemini parts of `hooks.rs` in
 //! teletap itself; it writes the same files, byte for byte.
 //!
-//! - install: hooks and the MCP servers `teletap` and `teletap-ext` (extension
-//!   tools) in `<config dir>/settings.json` (`~/.gemini`, or
-//!   `$GEMINI_CLI_HOME/.gemini`);
+//! - install: hooks and the MCP server `teletap` in `<config dir>/settings.json`
+//!   (`~/.gemini`, or `$GEMINI_CLI_HOME/.gemini`). The `teletap-ext` server
+//!   older versions set goes, on install and uninstall;
 //! - hooks: which session event each Gemini hook is, and what it prints.
 //!
 //! Docs: <https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md>,
 //! <https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md>.
-//! Hook timeouts are in milliseconds; `trust: true` skips tool confirmations
-//! (on `teletap` only: extension tools are asked about on first use).
+//! Hook timeouts are in milliseconds; `trust: true` skips tool confirmations.
 
 #![cfg_attr(not(target_arch = "wasm32"), allow(dead_code, unused_imports))]
 
@@ -90,7 +89,7 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
     }
     report.notes.push(
         "Gemini CLI: hooks (SessionStart, BeforeAgent, AfterAgent, SessionEnd, AfterTool) and the \
-         `teletap` and `teletap-ext` MCP servers are set; restart Gemini to load them."
+         `teletap` MCP server are set; restart Gemini to load them."
             .into(),
     );
     Ok(report)
@@ -110,7 +109,7 @@ fn uninstall(req: &InstallRequest) -> Result<InstallResult> {
     Ok(report)
 }
 
-/// Our hooks and MCP servers, merged into `settings.json`.
+/// Our hooks and MCP servers, merged into `settings.json`; old servers gone.
 fn add(settings: &mut Value, req: &InstallRequest) -> Result<()> {
     {
         let hooks = json::object_at(settings, "hooks")?;
@@ -125,14 +124,11 @@ fn add(settings: &mut Value, req: &InstallRequest) -> Result<()> {
         }
     }
     let servers = json::object_at(settings, "mcpServers")?;
-    for (name, args, trusted) in json::MCP_SERVERS {
-        let extra = if *trusted {
-            vec![("trust", Value::Bool(true))]
-        } else {
-            vec![]
-        };
+    for (name, args) in json::MCP_SERVERS {
+        let extra = [("trust", Value::Bool(true))];
         servers.insert(name.to_string(), json::mcp_entry(req, args, &extra));
     }
+    json::remove_old_mcp(settings);
     Ok(())
 }
 
@@ -242,12 +238,7 @@ mod tests {
             s["mcpServers"]["teletap"],
             json!({"command": "/usr/local/bin/teletap", "args": ["mcp"], "trust": true})
         );
-        // Extension tools are asked about: no `trust`.
-        assert_eq!(
-            s["mcpServers"]["teletap-ext"],
-            json!({"command": "/usr/local/bin/teletap", "args": ["mcp", "--ext"]})
-        );
-        assert!(s["mcpServers"]["teletap-ext"].get("trust").is_none());
+        assert!(s["mcpServers"].get("teletap-ext").is_none());
         assert_eq!(s["mcpServers"]["gh"]["command"], "gh-mcp");
 
         let once = s.clone();
@@ -258,20 +249,18 @@ mod tests {
     }
 
     #[test]
-    fn teletap_ext_follows_the_teletap_binary() {
-        let mut r = opts();
-        r.teletap_home = Some("/tmp/h".into());
-        let mut s = json!({"mcpServers": {
-            "teletap-ext": {"command": "/old/teletap", "args": ["mcp", "--ext"]},
-            "ext": {"command": "/bin/other"},
-        }});
-        add(&mut s, &r).unwrap();
-        assert_eq!(
-            s["mcpServers"]["teletap-ext"],
-            json!({"command": "/usr/local/bin/teletap", "args": ["mcp", "--ext"], "env": {"TELETAP_HOME": "/tmp/h"}})
-        );
+    fn the_old_teletap_ext_server_goes() {
+        let ext = json!({"command": "/old/teletap", "args": ["mcp", "--ext"]});
+        let mut s = json!({"mcpServers": {"teletap-ext": ext, "ext": {"command": "/bin/other"}}});
+        add(&mut s, &opts()).unwrap();
+        assert!(s["mcpServers"].get("teletap-ext").is_none(), "on install");
+        s["mcpServers"]["teletap-ext"] = ext;
         remove(&mut s);
-        assert_eq!(s["mcpServers"], json!({"ext": {"command": "/bin/other"}}));
+        assert_eq!(
+            s["mcpServers"],
+            json!({"ext": {"command": "/bin/other"}}),
+            "on uninstall"
+        );
         // Someone else's `teletap-ext` server stays.
         let mut theirs = json!({"mcpServers": {"teletap-ext": {"command": "/bin/not-teletap"}}});
         let before = theirs.clone();

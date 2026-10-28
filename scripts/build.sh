@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# build.sh <extension> — builds providers/<extension> (or extensions/<extension>)
-# to WASM and packs it into dist/<name>-<version>.teletapext with `teletap ext pack`.
+# build.sh <provider> — builds providers/<provider> to WASM and packs it into
+# dist/<name>-<version>.teletapext with `teletap ext pack`.
 # TELETAP_SIGN_KEY=<key file> signs it (teletap/ extensions load only signed by teletap).
 # TELETAP=<path> picks the teletap binary (default: teletap on PATH).
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
-name=${1:?usage: build.sh <extension>}
+name=${1:?usage: build.sh <provider>}
 src=$root/providers/$name
-[ -d "$src" ] || src=$root/extensions/$name
 [ -f "$src/manifest.toml" ] || { echo "build.sh: no $name" >&2; exit 2; }
 crate=$(sed -n 's/^name = "\(.*\)"/\1/p' "$src/Cargo.toml" | head -1)
 (cd "$root" && cargo build -q --release --target wasm32-unknown-unknown -p "$crate")
