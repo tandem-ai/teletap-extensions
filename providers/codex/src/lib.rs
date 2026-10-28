@@ -2,11 +2,11 @@
 //! `teletap-agents/src/install/codex.rs` and the Codex parts of `hooks.rs` in
 //! teletap itself; it writes the same files, byte for byte.
 //!
-//! - install: hooks and the MCP servers `teletap` and `teletap-ext` (extension
-//!   tools, asked about on first use) in `$CODEX_HOME/config.toml` (default
-//!   `~/.codex`), edited with `toml_edit` so the user's comments and layout
-//!   stay;
-//! - launch (a cloud agent's run): the same MCP servers as `-c` overrides,
+//! - install: hooks and the MCP server `teletap` in `$CODEX_HOME/config.toml`
+//!   (default `~/.codex`), edited with `toml_edit` so the user's comments and
+//!   layout stay. The `teletap-ext` server older versions set goes, on
+//!   install and uninstall;
+//! - launch (a cloud agent's run): the same MCP server as `-c` overrides,
 //!   nothing written;
 //! - hooks: which session event each Codex hook is, and what it prints.
 //!
@@ -15,10 +15,6 @@
 //! command = "/…/teletap"
 //! args = ["mcp"]
 //! default_tools_approval_mode = "approve"
-//!
-//! [mcp_servers.teletap-ext]
-//! command = "/…/teletap"
-//! args = ["mcp", "--ext"]
 //!
 //! [[hooks.Stop]]
 //! [[hooks.Stop.hooks]]
@@ -52,7 +48,7 @@ use teletap_ext::{
     HookParsed, HookRendered, InstallRequest, InstallResult, LaunchRequest, LaunchResult, config,
     door,
 };
-use toml_edit::{ArrayOfTables, DocumentMut, InlineTable, Item, Table, value};
+use toml_edit::{ArrayOfTables, DocumentMut, InlineTable, Item, Table, TableLike, value};
 
 /// (Codex event, trust-key label, our event name, timeout in seconds).
 /// SessionEnd timeouts are capped at 3 s by Codex.
@@ -204,8 +200,8 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
     }
     report.notes.push(
         "Codex: hooks (SessionStart, UserPromptSubmit, Stop, Interrupt, SessionEnd, \
-         PostToolUse, PermissionRequest) and the `teletap` and `teletap-ext` MCP \
-         servers are set, and the hooks are marked trusted; new sessions pick them up."
+         PostToolUse, PermissionRequest) and the `teletap` MCP server are set, and \
+         the hooks are marked trusted; new sessions pick them up."
             .into(),
     );
     Ok(report)
@@ -217,22 +213,17 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
 fn launch_args(req: &LaunchRequest) -> Vec<String> {
     let s = |v: &str| toml_edit::Value::from(v).to_string();
     let mut out = Vec::new();
-    for (name, args, trusted) in config::MCP_SERVERS {
+    for (name, args) in config::MCP_SERVERS {
         let key = format!("mcp_servers.{name}");
         let args: toml_edit::Array = args.iter().copied().collect();
         let mut env = InlineTable::new();
         env.insert("TELETAP_HOME", req.teletap_home.as_str().into());
-        let mut set = vec![
+        let set = [
             format!("{key}.command={}", s(&req.teletap_bin)),
             format!("{key}.args={args}"),
             format!("{key}.env={env}"),
+            format!("{key}.default_tools_approval_mode={}", s("approve")),
         ];
-        if *trusted {
-            set.push(format!(
-                "{key}.default_tools_approval_mode={}",
-                s("approve")
-            ));
-        }
         for kv in set {
             out.push("-c".to_string());
             out.push(kv);
@@ -247,7 +238,8 @@ fn install_doc(doc: &mut DocumentMut, req: &InstallRequest, path: &str, src: &st
     // MCP servers.
     {
         let servers = table_at(root, "mcp_servers")?;
-        for (name, args, trusted) in config::MCP_SERVERS {
+        remove_our_servers(servers, config::OLD_MCP_SERVERS.iter().copied());
+        for (name, args) in config::MCP_SERVERS {
             let mut mesh = Table::new();
             mesh.insert("command", value(req.teletap_bin.clone()));
             let args: toml_edit::Array = args.iter().copied().collect();
@@ -257,9 +249,7 @@ fn install_doc(doc: &mut DocumentMut, req: &InstallRequest, path: &str, src: &st
                 env.insert("TELETAP_HOME", home.clone().into());
                 mesh.insert("env", value(env));
             }
-            if *trusted {
-                mesh.insert("default_tools_approval_mode", value("approve"));
-            }
+            mesh.insert("default_tools_approval_mode", value("approve"));
             match servers.get_mut(name).and_then(Item::as_table_mut) {
                 // Keep the table where it is (and any keys the user added).
                 Some(existing) => {
@@ -370,16 +360,11 @@ fn uninstall_doc(doc: &mut DocumentMut, src: &str) {
         .get_mut("mcp_servers")
         .and_then(Item::as_table_like_mut)
     {
-        for (name, ..) in config::MCP_SERVERS {
-            let ours = servers
-                .get(name)
-                .and_then(|m| m.get("command"))
-                .and_then(Item::as_str)
-                .is_some_and(|c| c.rsplit('/').next() == Some("teletap"));
-            if ours {
-                servers.remove(name);
-            }
-        }
+        let names = config::MCP_SERVERS.iter().map(|(name, _)| *name);
+        remove_our_servers(
+            servers,
+            names.chain(config::OLD_MCP_SERVERS.iter().copied()),
+        );
         if servers.is_empty() {
             root.remove("mcp_servers");
         }
@@ -389,6 +374,20 @@ fn uninstall_doc(doc: &mut DocumentMut, src: &str) {
         remove_our_hooks(hooks, src, None);
         if hooks.is_empty() {
             root.remove("hooks");
+        }
+    }
+}
+
+/// Removes the servers named that run teletap: a user's own stay.
+fn remove_our_servers<'a>(servers: &mut dyn TableLike, names: impl IntoIterator<Item = &'a str>) {
+    for name in names {
+        let ours = servers
+            .get(name)
+            .and_then(|m| m.get("command"))
+            .and_then(Item::as_str)
+            .is_some_and(|c| c.rsplit('/').next() == Some("teletap"));
+        if ours {
+            servers.remove(name);
         }
     }
 }
@@ -603,9 +602,6 @@ mod tests {
                 r#"mcp_servers.teletap.args=["mcp"]"#,
                 r#"mcp_servers.teletap.env={ TELETAP_HOME = "/tmp/h" }"#,
                 r#"mcp_servers.teletap.default_tools_approval_mode="approve""#,
-                r#"mcp_servers.teletap-ext.command="/a b/teletap""#,
-                r#"mcp_servers.teletap-ext.args=["mcp", "--ext"]"#,
-                r#"mcp_servers.teletap-ext.env={ TELETAP_HOME = "/tmp/h" }"#,
             ]
         );
         // Each override is the TOML the install writes.
@@ -645,12 +641,9 @@ mod tests {
     fn install_writes_hooks_trust_and_mcp() {
         let r = req(Some("/tmp/h"));
         let out = installed("", &r);
-        // Extension tools are asked about: no approval mode on `teletap-ext`.
         assert!(out.starts_with(
             "[mcp_servers.teletap]\ncommand = \"/a b/teletap\"\nargs = [\"mcp\"]\n\
-             env = { TELETAP_HOME = \"/tmp/h\" }\ndefault_tools_approval_mode = \"approve\"\n\n\
-             [mcp_servers.teletap-ext]\ncommand = \"/a b/teletap\"\nargs = [\"mcp\", \"--ext\"]\n\
-             env = { TELETAP_HOME = \"/tmp/h\" }\n\n"
+             env = { TELETAP_HOME = \"/tmp/h\" }\ndefault_tools_approval_mode = \"approve\"\n\n"
         ));
         assert!(out.contains(
             "[[hooks.Stop]]\n\n[[hooks.Stop.hooks]]\ntype = \"command\"\n\
@@ -660,12 +653,7 @@ mod tests {
             "[hooks.state.\"{SRC}:stop:0:0\"]\ntrusted_hash = \"sha256:8c660001ac0968b571b01dd345a589558a3f8cfca442e238cf458f9bada6005f\"\n"
         );
         assert!(out.contains(&stop), "{out}");
-        let doc = parse_doc(&out, "c.toml").unwrap();
-        assert!(
-            doc["mcp_servers"]["teletap-ext"]
-                .get("default_tools_approval_mode")
-                .is_none()
-        );
+        assert!(!out.contains("teletap-ext"));
         for (event, label, _, _) in EVENTS {
             assert!(out.contains(&format!("[[hooks.{event}.hooks]]")), "{event}");
             assert!(out.contains(&format!("{SRC}:{label}:0:0")), "{label}");
@@ -692,9 +680,10 @@ mod tests {
         // Our table stays where it was, with the user's key; no env without a home.
         assert!(out.contains(
             "[mcp_servers.teletap]\ncommand = \"/a b/teletap\"\nargs = [\"mcp\"]\n\
-             startup_timeout_sec = 20\ndefault_tools_approval_mode = \"approve\"\n\n\
-             [mcp_servers.teletap-ext]\ncommand = \"/a b/teletap\"\nargs = [\"mcp\", \"--ext\"]\n\n"
+             startup_timeout_sec = 20\ndefault_tools_approval_mode = \"approve\"\n\n"
         ));
+        // The old `teletap-ext` server goes.
+        assert!(!out.contains("teletap-ext"));
         assert!(!out.contains("/old/teletap"));
         assert!(!out.contains("hook codex tool"));
         assert!(out.contains("command = \"lint\""));
@@ -715,13 +704,19 @@ mod tests {
         assert_ne!(with_ours, user);
         assert_eq!(uninstalled(&with_ours), user);
         assert_eq!(uninstalled(&installed("", &req(None))), "");
-        // Someone else's `teletap` server stays.
+        // Ours go, the old `teletap-ext` included; someone else's servers stay.
+        let old =
+            "[mcp_servers.teletap-ext]\ncommand = \"/old/teletap\"\nargs = [\"mcp\", \"--ext\"]\n";
+        assert_eq!(uninstalled(old), "");
         let theirs = "[mcp_servers.teletap]\ncommand = \"/bin/meshy\"\n\n\
             [mcp_servers.teletap-ext]\ncommand = \"/bin/meshy\"\n";
         assert_eq!(uninstalled(theirs), theirs);
         let installed = installed(theirs, &req(None));
-        assert!(installed.contains("args = [\"mcp\", \"--ext\"]"));
-        assert!(!uninstalled(&installed).contains("mcp_servers"));
+        assert!(installed.contains("[mcp_servers.teletap-ext]\ncommand = \"/bin/meshy\"\n"));
+        assert_eq!(
+            uninstalled(&installed).trim_start(),
+            "[mcp_servers.teletap-ext]\ncommand = \"/bin/meshy\"\n"
+        );
     }
 
     #[test]

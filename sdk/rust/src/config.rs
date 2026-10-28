@@ -44,13 +44,13 @@ pub fn is_our_hook(command: &str, agent: &str) -> bool {
     })
 }
 
-/// Our MCP servers: (name, args after the mesh binary, tools run without
-/// asking). `teletap-ext` serves the tools teletap extensions contribute; those
-/// are asked about on first use.
-pub const MCP_SERVERS: &[(&str, &[&str], bool)] = &[
-    ("teletap", &["mcp"], true),
-    ("teletap-ext", &["mcp", "--ext"], false),
-];
+/// Our MCP servers: (name, args after the teletap binary). Their tools run
+/// without asking.
+pub const MCP_SERVERS: &[(&str, &[&str])] = &[("teletap", &["mcp"])];
+
+/// MCP servers older providers set (`teletap-ext`: extension tools, gone):
+/// install and uninstall remove them.
+pub const OLD_MCP_SERVERS: &[&str] = &["teletap-ext"];
 
 /// True when an MCP server entry runs the mesh binary.
 pub fn is_our_mcp(entry: &Value) -> bool {
@@ -202,11 +202,20 @@ pub fn remove_hooks(root: &mut Value, agent: &str) {
     }
 }
 
-/// Removes our MCP servers (`MCP_SERVERS`); drops an emptied table.
+/// Removes our MCP servers, old ones included; drops an emptied table.
 pub fn remove_mcp(root: &mut Value) -> bool {
     MCP_SERVERS
         .iter()
-        .fold(false, |any, (name, ..)| remove_mcp_server(root, name) | any)
+        .fold(remove_old_mcp(root), |any, (name, _)| {
+            remove_mcp_server(root, name) | any
+        })
+}
+
+/// Removes our old MCP servers (`OLD_MCP_SERVERS`); drops an emptied table.
+pub fn remove_old_mcp(root: &mut Value) -> bool {
+    OLD_MCP_SERVERS
+        .iter()
+        .fold(false, |any, name| remove_mcp_server(root, name) | any)
 }
 
 /// Removes `mcpServers.<name>` when it is ours; drops an emptied table.

@@ -1,9 +1,9 @@
 id = "teletap/cursor"
-version = "0.2.0"
+version = "0.3.0"
 api = "1.1"
 kind = "provider"
 scope = "personal"
-description = "Connects Cursor (editor and CLI) to teletap: hooks, the teletap and teletap-ext MCP servers and the CLI's allow list."
+description = "Connects Cursor (editor and CLI) to teletap: hooks, the teletap MCP server and the CLI's allow list."
 
 [provider]
 agent = "cursor"

@@ -2,11 +2,12 @@
 //! used to be `teletap-agents/src/install/cursor.rs` and the Cursor parts of
 //! `hooks.rs` in teletap itself; it writes the same files, byte for byte.
 //!
-//! - install: hooks in `<config dir>/hooks.json` and the MCP servers `teletap`
-//!   and `teletap-ext` (extension tools) in `<config dir>/mcp.json` (`~/.cursor`
-//!   by default). Both the editor and `cursor-agent` read them. The CLI's
-//!   allow list (`cli-config.json`) gets `Mcp(teletap:*)` so the agent can use
-//!   teletap's tools without asking each time; extension tools are asked about;
+//! - install: hooks in `<config dir>/hooks.json` and the MCP server `teletap`
+//!   in `<config dir>/mcp.json` (`~/.cursor` by default). Both the editor and
+//!   `cursor-agent` read them. The CLI's allow list (`cli-config.json`) gets
+//!   `Mcp(teletap:*)` so the agent can use teletap's tools without asking each
+//!   time. The `teletap-ext` server older versions set goes, on install and
+//!   uninstall;
 //! - hooks: which session event each Cursor hook is, and what it prints.
 //!
 //! Hooks are flat lists: `{"version": 1, "hooks": {"stop": [{command, timeout}]}}`.
@@ -111,8 +112,7 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
     }
     report.notes.push(
         "Cursor: hooks (sessionStart, postToolUse, stop, sessionEnd) and the `teletap` \
-         and `teletap-ext` MCP servers are set for the editor and the CLI; new chats \
-         pick them up."
+         MCP server are set for the editor and the CLI; new chats pick them up."
             .into(),
     );
     Ok(report)
@@ -181,15 +181,16 @@ fn remove_hooks(root: &mut Value) {
     }
 }
 
-/// Our MCP servers in `mcp.json`.
+/// Our MCP servers in `mcp.json`, old ones gone.
 fn add_mcp(root: &mut Value, req: &InstallRequest) -> Result<()> {
     let servers = json::object_at(root, "mcpServers")?;
-    for (name, args, _) in json::MCP_SERVERS {
+    for (name, args) in json::MCP_SERVERS {
         servers.insert(
             name.to_string(),
             json::mcp_entry(req, args, &[("type", Value::String("stdio".into()))]),
         );
     }
+    json::remove_old_mcp(root);
     Ok(())
 }
 
@@ -312,14 +313,17 @@ mod tests {
         remove_hooks(&mut h);
         assert_eq!(h, theirs);
 
-        let mut m = json!({"mcpServers": {"gh": {"command": "gh-mcp"}}});
+        // The old `teletap-ext` server goes.
+        let mut m = json!({"mcpServers": {
+            "gh": {"command": "gh-mcp"},
+            "teletap-ext": {"type": "stdio", "command": "/old/teletap", "args": ["mcp", "--ext"]},
+        }});
         add_mcp(&mut m, &opts()).unwrap();
         assert_eq!(
             m,
             json!({"mcpServers": {
                 "gh": {"command": "gh-mcp"},
                 "teletap": {"type": "stdio", "command": "/usr/local/bin/teletap", "args": ["mcp"]},
-                "teletap-ext": {"type": "stdio", "command": "/usr/local/bin/teletap", "args": ["mcp", "--ext"]},
             }})
         );
         let once = m.clone();
@@ -331,9 +335,7 @@ mod tests {
         let mut c = json!({});
         add_permission(&mut c, "/c/cli-config.json").unwrap();
         add_permission(&mut c, "/c/cli-config.json").unwrap();
-        // Not `Mcp(teletap-ext:*)`: extension tools are asked about.
         assert_eq!(c["permissions"]["allow"], json!(["Mcp(teletap:*)"]));
-        assert!(!c.to_string().contains("teletap-ext"));
         remove_permission(&mut c);
         assert_eq!(c, json!({"permissions": {"allow": []}}));
     }

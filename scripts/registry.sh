@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# registry.sh [extension…] — builds the extensions (default: every provider)
+# registry.sh [provider…] — builds the providers (default: all of them)
 # with build.sh and publishes them into dist/registry (index.json and
 # <id>/<version>.teletapext), the folder a lookup server serves at
 # /dl/extensions/ (from <dist>/extensions). REGISTRY=<dir> publishes elsewhere.
@@ -12,8 +12,7 @@ fi
 packages=()
 for n in "${names[@]}"; do
   "$root/scripts/build.sh" "$n" >/dev/null
-  src=$root/providers/$n; [ -d "$src" ] || src=$root/extensions/$n
-  version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$src/manifest.toml" | head -1)
+  version=$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/providers/$n/manifest.toml" | head -1)
   packages+=("$root/dist/$n-$version.teletapext")
 done
-"${TELETAP:-mesh}" ext publish "${packages[@]}" --into "${REGISTRY:-$root/dist/registry}"
+"${TELETAP:-teletap}" ext publish "${packages[@]}" --into "${REGISTRY:-$root/dist/registry}"
