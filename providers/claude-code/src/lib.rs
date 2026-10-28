@@ -2,7 +2,8 @@
 //! to be `teletap-agents/src/install/claude.rs` and the Claude parts of
 //! `hooks.rs` in teletap itself; it writes the same files, byte for byte.
 //!
-//! - install: hooks and permissions in `<config dir>/settings.json`, the MCP
+//! - install: hooks and permissions in `<config dir>/settings.json`, the
+//!   `/teletap` skill in `<config dir>/skills/teletap/SKILL.md`, the MCP
 //!   servers `teletap` and `teletap-ext` (extension tools) in the user-scope
 //!   `mcpServers` of `.claude.json` (through `claude mcp …` when no config
 //!   dir is given and `claude` is on PATH: a running Claude rewrites that
@@ -15,7 +16,8 @@
 //!   follows stays a prompt;
 //! - hooks: which session event each Claude hook is, and what it prints.
 //!
-//! Docs: <https://code.claude.com/docs/en/hooks>, <https://code.claude.com/docs/en/mcp>.
+//! Docs: <https://code.claude.com/docs/en/hooks>, <https://code.claude.com/docs/en/mcp>,
+//! <https://code.claude.com/docs/en/skills>.
 
 #![cfg_attr(not(target_arch = "wasm32"), allow(dead_code, unused_imports))]
 
@@ -55,8 +57,24 @@ const PERMISSIONS: &[&str] = &[
     "Bash(teletap show:*)",
     "Bash(teletap wait:*)",
     "Bash(teletap sessions:*)",
+    "Bash(teletap skill)",
     "mcp__teletap__*",
 ];
+
+/// The `/teletap` skill: in the `/` menu, and what a request after it means.
+/// The how-to itself is `teletap skill`, so it follows the teletap installed.
+const SKILL: &str = r#"---
+name: teletap
+description: Reach the people of your team through teletap. Use on /teletap (/teletap send this to @gab, /teletap ask @sam whether …, /teletap inbox), when asked to send something to someone or ask a person, or when the work needs a person's decision you can't find yourself.
+argument-hint: send this to @sam | ask @sam … | inbox
+---
+
+Run `teletap skill` and follow it: it is how to use the teletap installed here.
+
+When the person typed `/teletap` with a request, do that request with teletap, as its
+"/teletap …" section says. "send this to @gab": send what the conversation just
+produced or points to, as one message that stands on its own.
+"#;
 
 // The export exists in the WASM build only: host-side unit tests can't link
 // Extism's imports, and test the logic below directly.
@@ -99,6 +117,9 @@ fn result(r: Result<InstallResult>) -> InstallResult {
 struct Files {
     settings: String,
     claude_json: String,
+    /// `skills/teletap`, and its `SKILL.md`.
+    skill_dir: String,
+    skill: String,
 }
 
 fn files(req: &InstallRequest) -> Files {
@@ -124,6 +145,8 @@ fn files(req: &InstallRequest) -> Files {
     Files {
         settings: format!("{dir}/settings.json"),
         claude_json,
+        skill_dir: format!("{dir}/skills/teletap"),
+        skill: format!("{dir}/skills/teletap/SKILL.md"),
     }
 }
 
@@ -183,6 +206,9 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
     if json::write(&f.settings, &settings)? {
         report.files.push(f.settings.clone());
     }
+    if door::write(&f.skill, SKILL)? {
+        report.files.push(f.skill.clone());
+    }
 
     if via_cli(req)? {
         // Only read the file, to skip the CLI when nothing changes.
@@ -203,8 +229,8 @@ fn install(req: &InstallRequest) -> Result<InstallResult> {
     report.notes.push(
         "Claude Code: hooks (SessionStart, UserPromptSubmit, Stop, Notification, \
          PermissionRequest, SessionEnd), \
-         permissions and the `teletap` and `teletap-ext` MCP servers are set; new sessions \
-         pick them up."
+         permissions, the /teletap skill and the `teletap` and `teletap-ext` MCP servers \
+         are set; new sessions pick them up."
             .into(),
     );
     Ok(report)
@@ -320,6 +346,9 @@ fn uninstall(req: &InstallRequest) -> Result<InstallResult> {
         } else if json::remove_mcp(&mut cj) && json::write(&f.claude_json, &cj)? {
             report.files.push(f.claude_json.clone());
         }
+    }
+    if door::remove(&f.skill_dir)? {
+        report.files.push(f.skill.clone());
     }
     Ok(report)
 }
@@ -551,6 +580,14 @@ mod tests {
     }
 
     #[test]
+    fn the_skill_is_teletap_in_the_slash_menu() {
+        assert!(SKILL.starts_with("---\nname: teletap\ndescription: "));
+        assert!(SKILL.contains("/teletap send this to @gab"));
+        assert!(SKILL.contains("Run `teletap skill`"));
+        assert!(PERMISSIONS.contains(&"Bash(teletap skill)"));
+    }
+
+    #[test]
     fn config_files_follow_claude() {
         let req = |dir: Option<&str>, env: Option<&str>| InstallRequest {
             config_dir: dir.map(str::to_string),
@@ -564,6 +601,10 @@ mod tests {
         assert_eq!(
             (f.settings.as_str(), f.claude_json.as_str()),
             ("/Users/p/.claude/settings.json", "/Users/p/.claude.json")
+        );
+        assert_eq!(
+            (f.skill_dir.as_str(), f.skill.as_str()),
+            ("/Users/p/.claude/skills/teletap", "/Users/p/.claude/skills/teletap/SKILL.md")
         );
         let f = files(&req(Some("/tmp/c/"), None));
         assert_eq!(
