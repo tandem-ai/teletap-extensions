@@ -1,0 +1,19 @@
+README.md
+  s_f5469caeba39e5::t_fd70df8fa5bdf4 3-5,9-13,16,20-25,41-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "221056495df1877fe1092c8e37e0df983e534665",
+  "prompts": {},
+  "sessions": {
+    "s_f5469caeba39e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71b7d72e-deaa-452b-8939-dcf305e1d36c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Gabriel <gabriel@usetandem.ai>"
+    }
+  }
+}
