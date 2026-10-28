@@ -40,7 +40,10 @@ teletap install                                  #   every agent found, provider
 
 ## Support a new agent
 
-Write a provider for it with the SDK; `providers/*` are the examples. Build and try it:
+Write a provider for it with the SDK; `providers/*` are the examples. If the agent loads
+Agent Skills, list where in `[provider]` `skill` (first path that expands wins, each ending
+`/skills/teletap/SKILL.md`): teletapd writes teletap's skill there and removes it on
+uninstall. Build and try it:
 
 ```sh
 scripts/build.sh <name>                       # dist/<name>-<version>.teletapext

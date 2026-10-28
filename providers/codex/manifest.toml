@@ -9,6 +9,13 @@ description = "Connects Codex to teletap: trusted hooks and the teletap MCP serv
 agent = "codex"
 name = "Codex"
 install_env = ["CODEX_HOME"]
+# Codex's own skills folder ($CODEX_HOME/skills; it calls it deprecated
+# in favour of ~/.agents/skills, which Gemini, Pi and Cursor read too).
+skill = [
+  "{config_dir}/skills/teletap/SKILL.md",
+  "${CODEX_HOME}/skills/teletap/SKILL.md",
+  "~/.codex/skills/teletap/SKILL.md",
+]
 
 [provider.session]
 processes = ["codex"]
