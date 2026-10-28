@@ -9,6 +9,10 @@ description = "Connects Cursor (editor and CLI) to teletap: hooks, the teletap M
 agent = "cursor"
 name = "Cursor"
 install_env = []
+skill = [
+  "{config_dir}/skills/teletap/SKILL.md",
+  "~/.cursor/skills/teletap/SKILL.md",
+]
 
 [provider.session]
 # A chat is its conversation, whatever process runs the tool.

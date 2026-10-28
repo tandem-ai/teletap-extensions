@@ -9,6 +9,11 @@ description = "Connects Claude Code to teletap: hooks, the teletap MCP server an
 agent = "claude"
 name = "Claude Code"
 install_env = ["CLAUDE_CONFIG_DIR"]
+skill = [
+  "{config_dir}/skills/teletap/SKILL.md",
+  "${CLAUDE_CONFIG_DIR}/skills/teletap/SKILL.md",
+  "~/.claude/skills/teletap/SKILL.md",
+]
 hook_env = ["CLAUDE_CODE_MESSAGING_SOCKET", "CLAUDE_CODE_MESSAGING_TOKEN"]
 
 [provider.session]

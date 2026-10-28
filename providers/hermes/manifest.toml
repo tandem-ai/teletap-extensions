@@ -1,5 +1,5 @@
 id = "teletap/hermes"
-version = "0.1.1"
+version = "0.1.2"
 api = "1.1"
 kind = "provider"
 scope = "personal"
@@ -9,6 +9,11 @@ description = "Connects Hermes Agent to teletap: a plugin that serves the sessio
 agent = "hermes"
 name = "Hermes"
 install_env = ["HERMES_HOME"]
+skill = [
+  "{config_dir}/skills/teletap/SKILL.md",
+  "${HERMES_HOME}/skills/teletap/SKILL.md",
+  "~/.hermes/skills/teletap/SKILL.md",
+]
 
 [provider.session]
 processes = ["hermes"]
