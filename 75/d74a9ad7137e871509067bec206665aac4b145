@@ -1,0 +1,63 @@
+Cargo.lock
+  s_b1cd6c7c14cf42::t_7385bbb7a47330 52,62,93,197,223,302
+README.md
+  s_b1cd6c7c14cf42::t_fb341c435b93ea 3-5,9-13,16,20-25,41-56
+providers/claude-code/Cargo.toml
+  s_b1cd6c7c14cf42::t_4967d41e266f4c 4
+providers/claude-code/manifest.toml
+  s_b1cd6c7c14cf42::t_680beacba70a0b 2,6,12-16,27-28
+providers/claude-code/src/lib.rs
+  s_b1cd6c7c14cf42::t_33ab2bb92efbc9 6-11,50,206,216,249,255,259-268,270,272-275,324-325,512,520-543,560,565,568,570-574
+providers/codex/Cargo.toml
+  s_b1cd6c7c14cf42::t_90cb0e0ea9f6a6 4
+providers/codex/manifest.toml
+  s_b1cd6c7c14cf42::t_eaede1f2f78771 2,6,12-18
+providers/codex/src/lib.rs
+  s_b1cd6c7c14cf42::t_51215c75d978dc 5-9,51,199-200,212,217,221,237-238,248,358-362,376-389,640,650,674,676-677,722-725,730-734
+providers/cursor/Cargo.toml
+  s_b1cd6c7c14cf42::t_40033821ff7a51 4
+providers/cursor/manifest.toml
+  s_b1cd6c7c14cf42::t_93532eeda8e882 2,6,12-15
+providers/cursor/src/lib.rs
+  s_b1cd6c7c14cf42::t_b99162df3097e8 5-10,115,184,187,193,316-320
+providers/gemini/Cargo.toml
+  s_b1cd6c7c14cf42::t_d33b262a4b33cf 4
+providers/gemini/manifest.toml
+  s_b1cd6c7c14cf42::t_db4453593c2fe8 2,6,12-16
+providers/gemini/src/lib.rs
+  s_b1cd6c7c14cf42::t_419fb6976919f9 5-7,12,92,112,127-128,131,241,252-258,260-262
+providers/hermes/Cargo.toml
+  s_b1cd6c7c14cf42::t_97bb1479d18aa6 4
+providers/hermes/manifest.toml
+  s_b1cd6c7c14cf42::t_13b79d6cb54b5b 2,12-16
+providers/pi/Cargo.toml
+  s_b1cd6c7c14cf42::t_a10b194a651c88 4
+providers/pi/manifest.toml
+  s_b1cd6c7c14cf42::t_c1ef14943293ef 2,12-16
+scripts/build.sh
+  s_b1cd6c7c14cf42::t_02438b927a1f72 2-3,8
+scripts/registry.sh
+  s_b1cd6c7c14cf42::t_625678f291c345 2,15
+sdk/rust/Cargo.toml
+  s_b1cd6c7c14cf42::t_bff544862b1783 3
+sdk/rust/src/config.rs
+  s_b1cd6c7c14cf42::t_74a8ec2951f152 47-53,205,209-218
+sdk/rust/src/lib.rs
+  s_b1cd6c7c14cf42::t_b1ed598c3bf7fa 1-4,12,42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "75d74a9ad7137e871509067bec206665aac4b145",
+  "prompts": {},
+  "sessions": {
+    "s_b1cd6c7c14cf42": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d12b166-8833-4a11-aa5d-1665110aab70",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Paul FOURNET <paul.pfournet@gmail.com>"
+    }
+  }
+}
